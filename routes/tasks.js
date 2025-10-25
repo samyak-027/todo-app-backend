@@ -22,7 +22,19 @@ router.route('/').post((req, res) => {
         .catch(err => res.status(400).json('Error: ' + err));
 });
 
-// PATCH: Update a task's status by its ID
+// DELETE: Delete a task by its ID
+router.route('/:id').delete((req, res) => {
+    Task.findByIdAndDelete(req.params.id)
+        .then(task => {
+            if (!task) {
+                return res.status(404).json('Error: Task not found.');
+            }
+            res.json({ message: 'Task deleted.' });
+        })
+        .catch(err => res.status(400).json('Error: ' + err));
+});
+
+// PATCH: Update a task by its ID (status or text)
 router.route('/:id').patch((req, res) => {
     Task.findById(req.params.id)
         .then(task => {
@@ -30,10 +42,16 @@ router.route('/:id').patch((req, res) => {
                 return res.status(404).json('Error: Task not found.');
             }
             
-            task.status = req.body.status;
+            // Update fields if they exist in the request body
+            if (req.body.status !== undefined) {
+              task.status = req.body.status;
+            }
+            if (req.body.text !== undefined) {
+              task.text = req.body.text;
+            }
 
             task.save()
-                .then(() => res.json(task))
+                .then((updatedTask) => res.json(updatedTask))
                 .catch(err => res.status(400).json('Error: ' + err));
         })
         .catch(err => res.status(400).json('Error: ' + err));
